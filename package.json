@@ -47,8 +47,10 @@
   "license": "MIT",
   "dependencies": {
     "@msgpack/msgpack": "^3.0.0-beta2",
+    "@types/ws": "^8.18.1",
     "axios": "^1.7.2",
-    "ethers": "^6.13.2"
+    "ethers": "^6.13.2",
+    "ws": "^8.18.1"
   },
   "devDependencies": {
     "@types/jest": "^29.0.0",
