@@ -1,7 +1,7 @@
+import { USE_WS } from '../defines';
 import * as CONSTANTS from '../types/constants';
 import { environment } from '../utils/environment';
 import WebSocket from 'ws';
-const USE_WS = true; //
 
 export class WebSocketClient {
   private ws: WebSocket | any = null; // 'any' to support both native WebSocket and ws package

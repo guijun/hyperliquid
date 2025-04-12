@@ -8,13 +8,15 @@ export class HttpApi {
     private endpoint: string;
     private rateLimiter: RateLimiter;
 
-    constructor(baseUrl: string, endpoint: string = "/", rateLimiter: RateLimiter) {
+    constructor(baseUrl: string, endpoint: string = "/", rateLimiter: RateLimiter, agent?:any) {
         this.endpoint = endpoint;
         this.client = axios.create({
             baseURL: baseUrl,
             headers: {
                 'Content-Type': 'application/json',
             },
+            httpAgent: agent,
+            httpsAgent: agent,
         });
         this.rateLimiter = rateLimiter;
     }

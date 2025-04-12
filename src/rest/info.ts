@@ -52,9 +52,10 @@ export class InfoAPI {
         baseURL: string, 
         rateLimiter: RateLimiter, 
         symbolConversion: SymbolConversion,
-        parent: Hyperliquid
+        parent: Hyperliquid,
+        agent?:any
     ) {
-        this.httpApi = new HttpApi(baseURL, ENDPOINTS.INFO, rateLimiter);
+        this.httpApi = new HttpApi(baseURL, ENDPOINTS.INFO, rateLimiter, agent);
         this.symbolConversion = symbolConversion;
         this.parent = parent;
         
