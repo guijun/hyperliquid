@@ -71,9 +71,12 @@ export class Hyperliquid {
 
     // Initialize WebSocket client if enabled
     if (enableWs) {
+      if (USE_WS) {
 
-      if (!environment.hasNativeWebSocket() && environment.isNode) {
-        console.warn('Native WebSocket support is not available in this Node.js version. Attempting to use ws package...');
+      } else {
+        if (!environment.hasNativeWebSocket() && environment.isNode) {
+          console.warn('Native WebSocket support is not available in this Node.js version. Attempting to use ws package...');
+        }
       }
 
       // Create WebSocket client - it will attempt to use ws package if native WebSocket is not available
@@ -84,11 +87,12 @@ export class Hyperliquid {
         }
       }
       this.subscriptions = new WebSocketSubscriptions(this.ws, this.symbolConversion);
-
-      // Only disable WebSocket if the client fails to initialize
-      if (!environment.supportsWebSocket()) {
-        console.warn('WebSocket support is not available. Please install the ws package to enable WebSocket features:\n\nnpm install ws\n');
-        this.enableWs = false;
+      if (!USE_WS) {
+        // Only disable WebSocket if the client fails to initialize
+        if (!environment.supportsWebSocket()) {
+          console.warn('WebSocket support is not available. Please install the ws package to enable WebSocket features:\n\nnpm install ws\n');
+          this.enableWs = false;
+        }
       }
     } else {
       // Initialize with dummy objects if WebSocket is disabled
@@ -128,9 +132,11 @@ export class Hyperliquid {
         } catch (wsError: unknown) {
           const errorMessage = wsError instanceof Error ? wsError.message : String(wsError);
           console.warn('Failed to establish WebSocket connection:', errorMessage);
-          if (errorMessage.includes('Please install the ws package')) {
-            console.warn('To enable WebSocket support, please run: npm install ws');
-            this.enableWs = false;
+          if (!USE_WS) {
+            if (errorMessage.includes('Please install the ws package')) {
+              console.warn('To enable WebSocket support, please run: npm install ws');
+              this.enableWs = false;
+            }
           }
           // Don't throw here - we want to continue initialization even if WebSocket fails
         }
