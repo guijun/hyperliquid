@@ -94,7 +94,9 @@ export class WebSocketClient {
 
         this.ws.onmessage = (event: MessageEvent) => {
           const message = JSON.parse(event.data);
-
+          if (DBG.LOG_WS_ONMESSAGE) {
+            console.log("hyperliquid-sdk", "ws_onmessage", message)
+          }
           // Handle pong responses
           if (message.channel === 'pong') {
             this.lastPongReceived = Date.now();
@@ -198,8 +200,8 @@ export class WebSocketClient {
     }
 
     let msg = JSON.stringify(message);
-    if (DBG.LOG_convertSymbol) {
-      console.log("hyperliquid-sdk", msg)
+    if (DBG.LOG_WS_SENDMESSAGE) {
+      console.log("hyperliquid-sdk", "ws_sendmassage", msg)
     }
     this.ws.send(msg);
   }

@@ -73,6 +73,9 @@ export class SymbolConversion {
             // Handle perpetual assets
             perpMeta[0].universe.forEach((asset: { name: string }, index: number) => {
                 const internalName = `${asset.name}-PERP`;
+                if (DBG.LOG_ASSETMAP) {
+                    console.log("perpMata", internalName, asset)
+                }
                 this.assetToIndexMap.set(internalName, index);
                 this.exchangeToInternalNameMap.set(asset.name, internalName);
             });
@@ -82,6 +85,9 @@ export class SymbolConversion {
                 const universeItem = spotMeta[0].universe.find((item: any) => item.tokens[0] === token.index);
                 if (universeItem) {
                     const internalName = `${token.name}-SPOT`;
+                  if (DBG.LOG_ASSETMAP) {
+                      console.log("spotMata",internalName,  universeItem)
+                  }
                     const exchangeName = universeItem.name;
                     const index = universeItem.index;
                     this.assetToIndexMap.set(internalName, 10000 + index);
@@ -132,7 +138,7 @@ export class SymbolConversion {
         if (mode === "reverse") {
             for (const [key, value] of this.exchangeToInternalNameMap.entries()) {
                 if (value === symbol) {
-                  if (DBG.LOG_convertSymbol){  console.log(`[convertSymbol] (value === symbol) ${symbol} -> ${key}`); }
+                  if (DBG.LOG_convertSymbol){  console.log(`[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) (value === symbol) ${symbol} -> ${key}`); }
                     return key;
                 }
             }
@@ -143,16 +149,16 @@ export class SymbolConversion {
         if (symbolMode === "SPOT") {
             if (!rSymbol.endsWith("-SPOT")) {
                 rSymbol = symbol + "-SPOT";
-                if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] ${symbolMode} ${symbol} -> ${rSymbol}`); }       
+                if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) ${symbolMode} ${symbol} -> ${rSymbol}`); }       
             }
         } else if (symbolMode === "PERP") {
             if (!rSymbol.endsWith("-PERP")) {
                 rSymbol = symbol + "-PERP";
-                if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] ${symbolMode} ${symbol} -> ${rSymbol}`); }       
+                if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) ${symbolMode} ${symbol} -> ${rSymbol}`); }       
             }
         }
 
-        if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] ${symbol} -> ${rSymbol}`); }       
+        if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) ${symbol} -> ${rSymbol}`); }       
         return rSymbol;
     }
 
