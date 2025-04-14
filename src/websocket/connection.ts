@@ -1,4 +1,4 @@
-import { USE_WS } from '../defines';
+import { DBG, USE_WS } from '../defines';
 import * as CONSTANTS from '../types/constants';
 import { environment } from '../utils/environment';
 import WebSocket from 'ws';
@@ -196,7 +196,12 @@ export class WebSocketClient {
     if (!this.isConnected()) {
       throw new Error('WebSocket is not connected');
     }
-    this.ws.send(JSON.stringify(message));
+
+    let msg = JSON.stringify(message);
+    if (DBG.LOG_convertSymbol) {
+      console.log("hyperliquid-sdk", msg)
+    }
+    this.ws.send(msg);
   }
 
   close(manualDisconnect: boolean = false): void {

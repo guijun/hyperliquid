@@ -1,6 +1,7 @@
 import { HttpApi } from './helpers';
 import * as CONSTANTS from '../types/constants';
 import { MetaAndAssetCtxs, SpotMetaAndAssetCtxs } from '../types';
+import { DBG } from '../defines';
 
 export class SymbolConversion {
     private assetToIndexMap: Map<string, number> = new Map();
@@ -131,6 +132,7 @@ export class SymbolConversion {
         if (mode === "reverse") {
             for (const [key, value] of this.exchangeToInternalNameMap.entries()) {
                 if (value === symbol) {
+                  if (DBG.LOG_convertSymbol){  console.log(`[convertSymbol] (value === symbol) ${symbol} -> ${key}`); }
                     return key;
                 }
             }
@@ -138,17 +140,19 @@ export class SymbolConversion {
         } else {
             rSymbol = this.exchangeToInternalNameMap.get(symbol) || symbol;
         }
-
         if (symbolMode === "SPOT") {
             if (!rSymbol.endsWith("-SPOT")) {
                 rSymbol = symbol + "-SPOT";
+                if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] ${symbolMode} ${symbol} -> ${rSymbol}`); }       
             }
         } else if (symbolMode === "PERP") {
             if (!rSymbol.endsWith("-PERP")) {
                 rSymbol = symbol + "-PERP";
+                if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] ${symbolMode} ${symbol} -> ${rSymbol}`); }       
             }
         }
 
+        if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] ${symbol} -> ${rSymbol}`); }       
         return rSymbol;
     }
 
