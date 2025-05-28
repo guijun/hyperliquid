@@ -73,7 +73,9 @@ export class WebSocketClient {
       try {
         if (!this.WebSocketImpl) {
           if (environment.isNode) {
-            throw new Error('This SDK requires Node.js version 22 or higher as earlier versions do not have support for the NodeJS native websockets.');
+            throw new Error(
+              'This SDK requires Node.js version 22 or higher as earlier versions do not have support for the NodeJS native websockets.'
+            );
           } else {
             throw new Error('WebSocket support is not available in this environment.');
           }
@@ -93,16 +95,28 @@ export class WebSocketClient {
         };
 
         this.ws.onmessage = (event: MessageEvent) => {
-          const message = JSON.parse(event.data);
-          if (DBG.LOG_WS_ONMESSAGE) {
-            console.log("hyperliquid-sdk", "ws_onmessage", message)
-          }
-          // Handle pong responses
-          if (message.channel === 'pong') {
-            this.lastPongReceived = Date.now();
-          }
 
-          this.emit('message', message);
+
+          try {
+            const message = JSON.parse(event.data);
+            if (DBG.LOG_WS_ONMESSAGE) {
+              console.log("hyperliquid-sdk", "ws_onmessage", message)
+            }
+            // Debug log for post responses
+            if (message.channel === 'post') {
+              console.log('Received WebSocket post response:', JSON.stringify(message));
+            }
+
+            // Handle pong responses
+            if (message.channel === 'pong') {
+              this.lastPongReceived = Date.now();
+            }
+
+            this.emit('message', message);
+          } catch (error) {
+            console.error('Error processing WebSocket message:', error);
+            console.error('Raw message data:', event.data);
+          }
         };
 
         this.ws.onerror = (event: Event) => {
@@ -145,15 +159,19 @@ export class WebSocketClient {
         this.initialReconnectDelay * Math.pow(2, this.reconnectAttempts - 1),
         this.maxReconnectDelay
       );
-      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms...`);
+      console.log(
+        `Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms...`
+      );
       const timer = setTimeout(() => {
-        this.connect().then(() => {
-          this.emit('reconnect', true);
-        }).catch(err => {
-          console.error('Reconnection failed:', err);
-          this.emit('error', err);
-          this.reconnect();
-        });
+        this.connect()
+          .then(() => {
+            this.emit('reconnect', true);
+          })
+          .catch(err => {
+            console.error('Reconnection failed:', err);
+            this.emit('error', err);
+            this.reconnect();
+          });
       }, delay);
       // Only call unref if available (Node.js environment)
       if (typeof timer.unref === 'function') {

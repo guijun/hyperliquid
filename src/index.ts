@@ -9,7 +9,7 @@ import { ethers } from 'ethers';
 import { SymbolConversion } from './utils/symbolConversion';
 import { AuthenticationError } from './utils/errors';
 import { environment } from './utils/environment';
-import { USE_WS } from './defines';
+import { USE_WS } from './defines'; //kinba
 
 export interface HyperliquidConfig {
   enableWs?: boolean;
@@ -18,7 +18,7 @@ export interface HyperliquidConfig {
   walletAddress?: string;
   vaultAddress?: string;
   maxReconnectAttempts?: number;
-  agent?: any; // https-proxy-agent socks-proxy-agent
+  agent?: any; // https-proxy-agent socks-proxy-agent kinba
 }
 
 export class Hyperliquid {
@@ -43,12 +43,22 @@ export class Hyperliquid {
   private agent: any;
 
   constructor(params: HyperliquidConfig = {}) {
-    const { enableWs = true, privateKey, testnet = false, walletAddress, vaultAddress, maxReconnectAttempts } = params;
+    const {
+      enableWs = true,
+      privateKey,
+      testnet = false,
+      walletAddress,
+      vaultAddress,
+      maxReconnectAttempts,
+    } = params;
+
     this.agent = params.agent
     // Browser-specific security warnings
     if (environment.isBrowser) {
       if (privateKey) {
-        console.warn('Warning: Storing private keys in browser environments is not recommended. Consider using a Web3 wallet provider instead.');
+        console.warn(
+          'Warning: Storing private keys in browser environments is not recommended. Consider using a Web3 wallet provider instead.'
+        );
       }
       if (!window.isSecureContext) {
         console.warn('Warning: Running in an insecure context. Some features may be limited.');
@@ -59,7 +69,7 @@ export class Hyperliquid {
     this.baseUrl = testnet ? CONSTANTS.BASE_URLS.TESTNET : CONSTANTS.BASE_URLS.PRODUCTION;
     this.enableWs = enableWs;
     this.rateLimiter = new RateLimiter();
-    this.symbolConversion = new SymbolConversion(this.baseUrl, this.rateLimiter);
+    this.symbolConversion = new SymbolConversion(this.baseUrl, this.rateLimiter, this.agent);
     this.walletAddress = walletAddress || null;
     this.vaultAddress = vaultAddress || null;
 
@@ -75,7 +85,9 @@ export class Hyperliquid {
 
       } else {
         if (!environment.hasNativeWebSocket() && environment.isNode) {
-          console.warn('Native WebSocket support is not available in this Node.js version. Attempting to use ws package...');
+          console.warn(
+            'Native WebSocket support is not available in this Node.js version. Attempting to use ws package...'
+          );
         }
       }
 
@@ -90,7 +102,9 @@ export class Hyperliquid {
       if (!USE_WS) {
         // Only disable WebSocket if the client fails to initialize
         if (!environment.supportsWebSocket()) {
-          console.warn('WebSocket support is not available. Please install the ws package to enable WebSocket features:\n\nnpm install ws\n');
+          console.warn(
+            'WebSocket support is not available. Please install the ws package to enable WebSocket features:\n\nnpm install ws\n'
+          );
           this.enableWs = false;
         }
       }
@@ -189,16 +203,20 @@ export class Hyperliquid {
     return new Proxy({} as T, {
       get: (target, prop) => {
         if (!this.isValidPrivateKey) {
-          throw new AuthenticationError('Invalid or missing private key. This method requires authentication.');
+          throw new AuthenticationError(
+            'Invalid or missing private key. This method requires authentication.'
+          );
         }
         return target[prop as keyof T];
-      }
+      },
     });
   }
 
   private initializeWithPrivateKey(privateKey: string, testnet: boolean = false): void {
     try {
-      const formattedPrivateKey = privateKey.startsWith('0x') ? privateKey : `0x${privateKey}` as `0x${string}`;
+      const formattedPrivateKey = privateKey.startsWith('0x')
+        ? privateKey
+        : (`0x${privateKey}` as `0x${string}`);
       new ethers.Wallet(formattedPrivateKey); // Validate the private key
 
       this.exchange = new ExchangeAPI(
@@ -211,7 +229,13 @@ export class Hyperliquid {
         this,
         this.vaultAddress
       );
-      this.custom = new CustomOperations(this.exchange, this.info, formattedPrivateKey, this.symbolConversion, this.walletAddress);
+      this.custom = new CustomOperations(
+        this.exchange,
+        this.info,
+        formattedPrivateKey,
+        this.symbolConversion,
+        this.walletAddress
+      );
       this.isValidPrivateKey = true;
     } catch (error) {
       console.warn("Invalid private key provided. Some functionalities will be limited.");
@@ -230,9 +254,17 @@ export class Hyperliquid {
   }
 
   disconnect(): void {
-    if (this.ws) {
-      this.ws.close(true);
+    // Stop the asset map refresh interval
+    this.symbolConversion.stopPeriodicRefresh();
+
+    // Close WebSocket connection if enabled
+    if (this.enableWs && this.ws && typeof this.ws.close === 'function') {
+      this.ws.close(true); // Pass true to indicate manual disconnect
     }
+
+    // Reset initialization state
+    this._initialized = false;
+    this._initializing = null;
   }
 
   public getBaseUrl(): string {
