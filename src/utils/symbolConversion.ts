@@ -10,6 +10,9 @@ export class SymbolConversion {
   private refreshIntervalMs: number = 60000;
   private refreshInterval: any = null;
   private initialized: boolean = false;
+  private consecutiveFailures: number = 0;
+  private maxConsecutiveFailures: number = 5;
+  private baseRetryDelayMs: number = 1000;
 
   constructor(baseURL: string, rateLimiter: any, agent?: any) { //kinba
     this.httpApi = new HttpApi(baseURL, CONSTANTS.ENDPOINTS.INFO, rateLimiter, agent); //kinba
@@ -46,24 +49,68 @@ export class SymbolConversion {
 
     // Use standard setInterval that works in both Node.js and browser
     this.refreshInterval = setInterval(() => {
-      this.refreshAssetMaps().catch(console.error);
+      this.refreshAssetMaps().catch(error => {
+        console.error('Failed to refresh asset maps:', error);
+        // Increment consecutive failures counter
+        this.consecutiveFailures++;
+
+        // If we've reached the maximum number of consecutive failures, stop refreshing
+        if (this.consecutiveFailures >= this.maxConsecutiveFailures) {
+          console.warn(
+            `Maximum consecutive failures (${this.maxConsecutiveFailures}) reached. Stopping automatic refresh.`
+          );
+          this.stopPeriodicRefresh();
+        }
+      });
     }, this.refreshIntervalMs);
+  }
+
+  // Check if max failures has been reached and stop refresh if needed
+  private checkMaxFailures(): void {
+    if (this.consecutiveFailures >= this.maxConsecutiveFailures) {
+      console.warn(
+        `Maximum consecutive failures (${this.maxConsecutiveFailures}) reached. Stopping automatic refresh.`
+      );
+      this.stopPeriodicRefresh();
+    }
+  }
+
+  public stopPeriodicRefresh(): void {
+    if (this.refreshInterval !== null) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = null;
+    }
   }
 
   private async refreshAssetMaps(): Promise<void> {
     try {
       const [perpMeta, spotMeta] = await Promise.all([
-        this.httpApi.makeRequest<MetaAndAssetCtxs>({ "type": CONSTANTS.InfoType.PERPS_META_AND_ASSET_CTXS }),
-        this.httpApi.makeRequest<SpotMetaAndAssetCtxs>({ "type": CONSTANTS.InfoType.SPOT_META_AND_ASSET_CTXS })
+        this.httpApi.makeRequest<MetaAndAssetCtxs>({
+          type: CONSTANTS.InfoType.PERPS_META_AND_ASSET_CTXS,
+        }),
+        this.httpApi.makeRequest<SpotMetaAndAssetCtxs>({
+          type: CONSTANTS.InfoType.SPOT_META_AND_ASSET_CTXS,
+        }),
       ]);
 
       // Verify responses are valid before proceeding
-      if (!perpMeta || !perpMeta[0] || !perpMeta[0].universe || !Array.isArray(perpMeta[0].universe)) {
+      if (
+        !perpMeta ||
+        !perpMeta[0] ||
+        !perpMeta[0].universe ||
+        !Array.isArray(perpMeta[0].universe)
+      ) {
         throw new Error('Invalid perpetual metadata response');
       }
 
-      if (!spotMeta || !spotMeta[0] || !spotMeta[0].tokens || !Array.isArray(spotMeta[0].tokens) ||
-        !spotMeta[0].universe || !Array.isArray(spotMeta[0].universe)) {
+      if (
+        !spotMeta ||
+        !spotMeta[0] ||
+        !spotMeta[0].tokens ||
+        !Array.isArray(spotMeta[0].tokens) ||
+        !spotMeta[0].universe ||
+        !Array.isArray(spotMeta[0].universe)
+      ) {
         throw new Error('Invalid spot metadata response');
       }
 
@@ -82,7 +129,9 @@ export class SymbolConversion {
 
       // Handle spot assets
       spotMeta[0].tokens.forEach((token: any) => {
-        const universeItem = spotMeta[0].universe.find((item: any) => item.tokens[0] === token.index);
+        const universeItem = spotMeta[0].universe.find(
+          (item: any) => item.tokens[0] === token.index
+        );
         if (universeItem) {
           const internalName = `${token.name}-SPOT`;
           if (DBG.LOG_ASSETMAP) {
@@ -94,10 +143,18 @@ export class SymbolConversion {
           this.exchangeToInternalNameMap.set(exchangeName, internalName);
         }
       });
+
+      // Reset consecutive failures counter on success
+      this.consecutiveFailures = 0;
     } catch (error) {
-      console.error('Failed to refresh asset maps:', error);
-      // Don't throw here to prevent crashing the application
-      // but ensure that refresh attempt will be made again
+      // Increment consecutive failures counter
+      this.consecutiveFailures++;
+
+      // Check if we've reached the maximum number of consecutive failures
+      this.checkMaxFailures();
+
+      // Propagate the error to be handled by the caller
+      throw error;
     }
   }
 
@@ -116,7 +173,7 @@ export class SymbolConversion {
     return this.assetToIndexMap.get(assetSymbol);
   }
 
-  public async getAllAssets(): Promise<{ perp: string[], spot: string[] }> {
+  public async getAllAssets(): Promise<{ perp: string[]; spot: string[] }> {
     await this.ensureInitialized();
     const perp: string[] = [];
     const spot: string[] = [];
@@ -132,10 +189,10 @@ export class SymbolConversion {
     return { perp, spot };
   }
 
-  async convertSymbol(symbol: string, mode: string = "", symbolMode: string = ""): Promise<string> {
+  async convertSymbol(symbol: string, mode: string = '', symbolMode: string = ''): Promise<string> {
     await this.ensureInitialized();
     let rSymbol: string;
-    if (mode === "reverse") {
+    if (mode === 'reverse') {
       for (const [key, value] of this.exchangeToInternalNameMap.entries()) {
         if (value === symbol) {
           if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) (value === symbol) ${symbol} -> ${key}`); }
@@ -146,36 +203,42 @@ export class SymbolConversion {
     } else {
       rSymbol = this.exchangeToInternalNameMap.get(symbol) || symbol;
     }
-    if (symbolMode === "SPOT") {
-      if (!rSymbol.endsWith("-SPOT")) {
-        rSymbol = symbol + "-SPOT";
-        if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) ${symbolMode} ${symbol} -> ${rSymbol}`); }
+
+    if (symbolMode === 'SPOT') {
+      if (!rSymbol.endsWith('-SPOT')) {
+        rSymbol = symbol + '-SPOT';
       }
-    } else if (symbolMode === "PERP") {
-      if (!rSymbol.endsWith("-PERP")) {
-        rSymbol = symbol + "-PERP";
+    } else if (symbolMode === 'PERP') {
+      if (!rSymbol.endsWith('-PERP')) {
+        rSymbol = symbol + '-PERP';
         if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) ${symbolMode} ${symbol} -> ${rSymbol}`); }
       }
     }
 
-    if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) ${symbol} -> ${rSymbol}`); }
+    if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) ${symbolMode} ${symbol} -> ${rSymbol}`); }
     return rSymbol;
   }
 
-  async convertSymbolsInObject(obj: any, symbolsFields: Array<string> = ["coin", "symbol"], symbolMode: string = ""): Promise<any> {
+  async convertSymbolsInObject(
+    obj: any,
+    symbolsFields: Array<string> = ['coin', 'symbol'],
+    symbolMode: string = ''
+  ): Promise<any> {
     await this.ensureInitialized();
     if (typeof obj !== 'object' || obj === null) {
       return this.convertToNumber(obj);
     }
 
     if (Array.isArray(obj)) {
-      return Promise.all(obj.map(item => this.convertSymbolsInObject(item, symbolsFields, symbolMode)));
+      return Promise.all(
+        obj.map(item => this.convertSymbolsInObject(item, symbolsFields, symbolMode))
+      );
     }
 
     const convertedObj: any = {};
     for (const [key, value] of Object.entries(obj)) {
       if (symbolsFields.includes(key)) {
-        convertedObj[key] = await this.convertSymbol(value as string, "", symbolMode);
+        convertedObj[key] = await this.convertSymbol(value as string, '', symbolMode);
       } else if (key === 'side') {
         convertedObj[key] = value === 'A' ? 'sell' : value === 'B' ? 'buy' : value;
       } else {
@@ -198,8 +261,8 @@ export class SymbolConversion {
 
   async convertResponse(
     response: any,
-    symbolsFields: string[] = ["coin", "symbol"],
-    symbolMode: string = ""
+    symbolsFields: string[] = ['coin', 'symbol'],
+    symbolMode: string = ''
   ): Promise<any> {
     return this.convertSymbolsInObject(response, symbolsFields, symbolMode);
   }

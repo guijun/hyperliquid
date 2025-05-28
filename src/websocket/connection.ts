@@ -95,13 +95,12 @@ export class WebSocketClient {
         };
 
         this.ws.onmessage = (event: MessageEvent) => {
-
-
           try {
             const message = JSON.parse(event.data);
             if (DBG.LOG_WS_ONMESSAGE) {
               console.log("hyperliquid-sdk", "ws_onmessage", message)
             }
+
             // Debug log for post responses
             if (message.channel === 'post') {
               console.log('Received WebSocket post response:', JSON.stringify(message));
@@ -216,7 +215,6 @@ export class WebSocketClient {
     if (!this.isConnected()) {
       throw new Error('WebSocket is not connected');
     }
-
     let msg = JSON.stringify(message);
     if (DBG.LOG_WS_SENDMESSAGE) {
       console.log("hyperliquid-sdk", "ws_sendmassage", msg)
