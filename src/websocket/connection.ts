@@ -22,15 +22,14 @@ export class WebSocketClient {
   private manualDisconnect: boolean = false; // Flag to track if disconnect was manually initiated
   private readonly MAX_SUBSCRIPTIONS: number = 1000; // Maximum subscriptions per IP as per API docs
 
-
-  private agent: any //https-proxy-agent or socks-proxy-agent
+  private agent: any; //https-proxy-agent or socks-proxy-agent
 
   constructor(testnet: boolean = false, maxReconnectAttempts: number = 5) {
     this.maxReconnectAttempts = maxReconnectAttempts;
     this.url = testnet ? CONSTANTS.WSS_URLS.TESTNET : CONSTANTS.WSS_URLS.PRODUCTION;
     if (USE_WS) {
       // this.WebSocketImpl = (globalThis as any).require('ws');
-      this.WebSocketImpl = WebSocket
+      this.WebSocketImpl = WebSocket;
     } else {
       // Determine which WebSocket implementation to use
       if (environment.hasNativeWebSocket()) {
@@ -47,7 +46,7 @@ export class WebSocketClient {
   }
 
   setAgent(aAgent: unknown) {
-    this.agent = aAgent
+    this.agent = aAgent;
   }
 
   isConnected(): boolean {
@@ -98,7 +97,7 @@ export class WebSocketClient {
           try {
             const message = JSON.parse(event.data);
             if (DBG.LOG_WS_ONMESSAGE) {
-              console.log("hyperliquid-sdk", "ws_onmessage", message)
+              console.log('hyperliquid-sdk', 'ws_onmessage', message);
             }
 
             // Debug log for post responses
@@ -217,7 +216,7 @@ export class WebSocketClient {
     }
     let msg = JSON.stringify(message);
     if (DBG.LOG_WS_SENDMESSAGE) {
-      console.log("hyperliquid-sdk", "ws_sendmassage", msg)
+      console.log('hyperliquid-sdk', 'ws_sendmassage', msg);
     }
     this.ws.send(msg);
   }

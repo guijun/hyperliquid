@@ -14,7 +14,8 @@ export class SymbolConversion {
   private maxConsecutiveFailures: number = 5;
   private baseRetryDelayMs: number = 1000;
 
-  constructor(baseURL: string, rateLimiter: any, agent?: any) { //kinba
+  constructor(baseURL: string, rateLimiter: any, agent?: any) {
+    //kinba
     this.httpApi = new HttpApi(baseURL, CONSTANTS.ENDPOINTS.INFO, rateLimiter, agent); //kinba
   }
 
@@ -121,7 +122,7 @@ export class SymbolConversion {
       perpMeta[0].universe.forEach((asset: { name: string }, index: number) => {
         const internalName = `${asset.name}-PERP`;
         if (DBG.LOG_ASSETMAP) {
-          console.log("perpMata", internalName, asset)
+          console.log('perpMata', internalName, asset);
         }
         this.assetToIndexMap.set(internalName, index);
         this.exchangeToInternalNameMap.set(asset.name, internalName);
@@ -135,7 +136,7 @@ export class SymbolConversion {
         if (universeItem) {
           const internalName = `${token.name}-SPOT`;
           if (DBG.LOG_ASSETMAP) {
-            console.log("spotMata", internalName, universeItem)
+            console.log('spotMata', internalName, universeItem);
           }
           const exchangeName = universeItem.name;
           const index = universeItem.index;
@@ -195,7 +196,11 @@ export class SymbolConversion {
     if (mode === 'reverse') {
       for (const [key, value] of this.exchangeToInternalNameMap.entries()) {
         if (value === symbol) {
-          if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) (value === symbol) ${symbol} -> ${key}`); }
+          if (DBG.LOG_convertSymbol) {
+            console.log(
+              `[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) (value === symbol) ${symbol} -> ${key}`
+            );
+          }
           return key;
         }
       }
@@ -211,11 +216,19 @@ export class SymbolConversion {
     } else if (symbolMode === 'PERP') {
       if (!rSymbol.endsWith('-PERP')) {
         rSymbol = symbol + '-PERP';
-        if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) ${symbolMode} ${symbol} -> ${rSymbol}`); }
+        if (DBG.LOG_convertSymbol) {
+          console.log(
+            `[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) ${symbolMode} ${symbol} -> ${rSymbol}`
+          );
+        }
       }
     }
 
-    if (DBG.LOG_convertSymbol) { console.log(`[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) ${symbolMode} ${symbol} -> ${rSymbol}`); }
+    if (DBG.LOG_convertSymbol) {
+      console.log(
+        `[convertSymbol] mode(${mode}) symbolMode(${symbolMode}) ${symbolMode} ${symbol} -> ${rSymbol}`
+      );
+    }
     return rSymbol;
   }
 

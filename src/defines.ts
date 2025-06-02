@@ -3,5 +3,5 @@ export const DBG = {
   LOG_convertSymbol: false,
   LOG_WS_ONMESSAGE: false,
   LOG_WS_SENDMESSAGE: true,
-  LOG_ASSETMAP : false
-}
+  LOG_ASSETMAP: false,
+};

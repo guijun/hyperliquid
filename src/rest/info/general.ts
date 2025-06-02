@@ -126,12 +126,12 @@ export class GeneralInfoAPI {
     return rawResponse ? response : await this.symbolConversion.convertResponse(response);
   }
 
-  async getL2Book(coin: string, rawResponse: boolean = false, nSigFigs: number = 5, mantissa: number= undefined): Promise<L2Book> {
+  async getL2Book(coin: string, rawResponse: boolean = false, nSigFigs: number = 5, mantissa: number = undefined as any): Promise<L2Book> {
     const response = await this.httpApi.makeRequest({
       type: InfoType.L2_BOOK,
       coin: await this.symbolConversion.convertSymbol(coin, 'reverse'),
       nSigFigs,
-      mantissa
+      mantissa,
     });
     return rawResponse ? response : await this.symbolConversion.convertResponse(response);
   }

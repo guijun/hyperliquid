@@ -52,7 +52,7 @@ export class Hyperliquid {
       maxReconnectAttempts,
     } = params;
 
-    this.agent = params.agent
+    this.agent = params.agent;
     // Browser-specific security warnings
     if (environment.isBrowser) {
       if (privateKey) {
@@ -82,7 +82,6 @@ export class Hyperliquid {
     // Initialize WebSocket client if enabled
     if (enableWs) {
       if (USE_WS) {
-
       } else {
         if (!environment.hasNativeWebSocket() && environment.isNode) {
           console.warn(
@@ -194,7 +193,7 @@ export class Hyperliquid {
 
       this.isValidPrivateKey = true;
     } catch (error) {
-      console.warn("Invalid private key provided. Some functionalities will be limited.");
+      console.warn('Invalid private key provided. Some functionalities will be limited.');
       this.isValidPrivateKey = false;
     }
   }
@@ -238,7 +237,7 @@ export class Hyperliquid {
       );
       this.isValidPrivateKey = true;
     } catch (error) {
-      console.warn("Invalid private key provided. Some functionalities will be limited.");
+      console.warn('Invalid private key provided. Some functionalities will be limited.');
       this.isValidPrivateKey = false;
     }
   }
