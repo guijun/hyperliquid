@@ -4,7 +4,16 @@ export class RateLimiter {
   private readonly capacity: number;
   private readonly refillRate: number; // tokens per second
 
-  constructor() {
+  //kinba begin
+  static _inst: RateLimiter;
+  static affirm(): RateLimiter {
+    if (!RateLimiter._inst) {
+      RateLimiter._inst = new RateLimiter();
+    }
+    return RateLimiter._inst;
+  }
+  //kinba end
+  private constructor() {
     this.capacity = 100; // 100 tokens maximum as per API docs
     this.refillRate = 10; // 10 tokens per second as per API docs
     this.tokens = this.capacity;

@@ -68,8 +68,11 @@ export class Hyperliquid {
     this.testnet = testnet;
     this.baseUrl = testnet ? CONSTANTS.BASE_URLS.TESTNET : CONSTANTS.BASE_URLS.PRODUCTION;
     this.enableWs = enableWs;
-    this.rateLimiter = new RateLimiter();
-    this.symbolConversion = new SymbolConversion(this.baseUrl, this.rateLimiter, this.agent);
+    // this.rateLimiter = new RateLimiter();
+    this.rateLimiter = RateLimiter.affirm(); //kinba
+    this.symbolConversion = SymbolConversion.affirm(this.baseUrl, this.rateLimiter, this.agent); //kinba
+    // this.rateLimiter = new RateLimiter();       这个地方可以共享一个
+    //this.symbolConversion = new SymbolConversion(this.baseUrl, this.rateLimiter, this.agent);
     this.walletAddress = walletAddress || null;
     this.vaultAddress = vaultAddress || null;
 
