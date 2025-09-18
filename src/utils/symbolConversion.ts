@@ -16,14 +16,14 @@ export class SymbolConversion {
   private baseRetryDelayMs: number = 1000;
 
   //kinba begin
-  static _byURL: Record<string, SymbolConversion> = {}
+  static _byURL: Record<string, SymbolConversion> = {};
   static affirm(baseURL: string, rateLimiter: any, agent?: any): SymbolConversion {
     let r = SymbolConversion._byURL[baseURL];
     if (!r) {
       r = new SymbolConversion(baseURL, rateLimiter, agent);
       SymbolConversion._byURL[baseURL] = r;
     }
-    return r
+    return r;
   }
   //kinba end
   //
