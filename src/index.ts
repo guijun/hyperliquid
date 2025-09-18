@@ -132,7 +132,7 @@ export class Hyperliquid {
   }
   // kinba
   public initialized(): boolean {
-    return this._initialized
+    return this._initialized;
   }
 
   private async initialize(): Promise<void> {
