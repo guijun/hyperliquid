@@ -15,7 +15,19 @@ export class SymbolConversion {
   private maxConsecutiveFailures: number = 5;
   private baseRetryDelayMs: number = 1000;
 
-  constructor(baseURL: string, rateLimiter: any, agent?: any) {
+  //kinba begin
+  static _byURL: Record<string, SymbolConversion> = {};
+  static affirm(baseURL: string, rateLimiter: any, agent?: any): SymbolConversion {
+    let r = SymbolConversion._byURL[baseURL];
+    if (!r) {
+      r = new SymbolConversion(baseURL, rateLimiter, agent);
+      SymbolConversion._byURL[baseURL] = r;
+    }
+    return r;
+  }
+  //kinba end
+  //
+  private constructor(baseURL: string, rateLimiter: any, agent?: any) {
     //kinba
     this.httpApi = new HttpApi(baseURL, CONSTANTS.ENDPOINTS.INFO, rateLimiter, agent); //kinba
   }
