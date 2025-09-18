@@ -9,7 +9,7 @@ import { ethers } from 'ethers';
 import { SymbolConversion } from './utils/symbolConversion';
 import { AuthenticationError } from './utils/errors';
 import { environment } from './utils/environment';
-import { USE_WS } from './defines'; //kinba
+import { THROW_IF_INITIAL_FAILED, USE_WS } from './defines'; //kinba
 
 export interface HyperliquidConfig {
   enableWs?: boolean;
@@ -130,6 +130,10 @@ export class Hyperliquid {
       await this._initializing;
     }
   }
+  // kinba
+  public initialized(): boolean {
+    return this._initialized
+  }
 
   private async initialize(): Promise<void> {
     if (this._initialized) return;
@@ -137,6 +141,14 @@ export class Hyperliquid {
     try {
       // Initialize symbol conversion first
       await this.symbolConversion.initialize();
+      //kinba begin
+      if (!THROW_IF_INITIAL_FAILED) {
+        if (!this.symbolConversion.initialized) {
+          this._initializing = null;
+          return;
+        }
+      }
+      //kinba end
 
       // Connect WebSocket if enabled
       if (this.enableWs) {
@@ -159,7 +171,9 @@ export class Hyperliquid {
       this._initializing = null;
     } catch (error) {
       this._initializing = null;
-      throw error;
+      if (THROW_IF_INITIAL_FAILED) {
+        throw error;
+      }
     }
   }
 

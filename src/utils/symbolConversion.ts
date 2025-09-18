@@ -1,7 +1,7 @@
 import { HttpApi } from './helpers';
 import * as CONSTANTS from '../types/constants';
 import { MetaAndAssetCtxs, SpotMetaAndAssetCtxs } from '../types';
-import { DBG } from '../defines';
+import { DBG, THROW_IF_INITIAL_FAILED } from '../defines';
 
 export class SymbolConversion {
   private assetToIndexMap: Map<string, number> = new Map();
@@ -9,7 +9,8 @@ export class SymbolConversion {
   private httpApi: HttpApi;
   private refreshIntervalMs: number = 60000;
   private refreshInterval: any = null;
-  private initialized: boolean = false;
+  // private initialized: boolean = false;
+  public initialized: boolean = false; //kinba
   private consecutiveFailures: number = 0;
   private maxConsecutiveFailures: number = 5;
   private baseRetryDelayMs: number = 1000;
@@ -28,7 +29,9 @@ export class SymbolConversion {
       this.initialized = true;
     } catch (error) {
       console.error('Failed to initialize SymbolConversion:', error);
-      throw error;
+      if (THROW_IF_INITIAL_FAILED) {
+        throw error;
+      }
     }
   }
 
